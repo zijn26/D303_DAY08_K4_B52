@@ -44,7 +44,8 @@ except ImportError:
 # TODO: Calibrate threshold này bằng cách tự đo điểm cosine của semantic_search
 # cho câu hỏi liên quan vs câu hỏi lạc đề (xem ghi chú ở trên) — ĐỪNG copy nguyên
 # giá trị mẫu, mỗi corpus/embedding model sẽ cho khoảng điểm khác nhau.
-SCORE_THRESHOLD = 0.3   # Nếu best score (cosine gốc) < threshold → fallback PageIndex
+# SCORE_THRESHOLD calibrated bằng điểm Cosine gốc của semantic_search (dense_results[0]['score'])
+SCORE_THRESHOLD = 0.48   # Nếu best score (cosine gốc) < 0.48 → fallback PageIndex
 DEFAULT_TOP_K = 5
 RERANK_METHOD = "rrf"  # "cross_encoder" | "mmr" | "rrf"
 
@@ -83,14 +84,29 @@ def retrieve(
             'source': str  # 'hybrid' hoặc 'pageindex'
         }
     """
-    # Step 1: Song song chạy semantic + lexical
-    dense_results = semantic_search(query, top_k=top_k * 2)
-    sparse_results = lexical_search(query, top_k=top_k * 2)
+    # Step 1: Song song chạy semantic + lexical với candidate pool rộng hơn (max(20, top_k * 4))
+    fetch_k = max(20, top_k * 4)
+    dense_results = semantic_search(query, top_k=fetch_k)
+    for item in dense_results:
+        item["dense_score"] = item.get("score")
 
-    # Step 2: Merge bằng RRF
-    merged = rerank_rrf([dense_results, sparse_results], top_k=top_k * 2)
+    sparse_results = lexical_search(query, top_k=fetch_k)
+    for item in sparse_results:
+        item["bm25_score"] = item.get("score")
+
+    # Build maps by content for fast score lookup
+    dense_map = {item["content"]: item.get("dense_score") for item in dense_results if "content" in item}
+    bm25_map = {item["content"]: item.get("bm25_score") for item in sparse_results if "content" in item}
+
+    # Step 2: Merge bằng RRF (tự động đính kèm dense_score & bm25_score)
+    merged = rerank_rrf([dense_results, sparse_results], top_k=fetch_k)
     for item in merged:
         item["source"] = "hybrid"
+        content = item.get("content", "")
+        if item.get("dense_score") is None and content in dense_map:
+            item["dense_score"] = dense_map[content]
+        if item.get("bm25_score") is None and content in bm25_map:
+            item["bm25_score"] = bm25_map[content]
 
     # Step 3: Check threshold DÙNG ĐIỂM COSINE GỐC (dense_results), KHÔNG PHẢI RRF
     best_score = dense_results[0]["score"] if dense_results else 0.0
@@ -106,7 +122,10 @@ def retrieve(
 
     # Step 4: Rerank
     if use_reranking and merged:
-        final_results = rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
+        if RERANK_METHOD == "rrf":
+            final_results = merged[:top_k]
+        else:
+            final_results = rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
     else:
         final_results = merged[:top_k]
 

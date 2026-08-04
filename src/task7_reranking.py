@@ -134,8 +134,6 @@ def rerank_rrf(
     seen_counter = 0
 
     for ranked_list in ranked_lists:
-        # Một document chỉ được tính một lần trong mỗi ranker, kể cả
-        # khi upstream vô tình trả về candidate trùng lặp.
         seen_in_list: set[str] = set()
         for rank, item in enumerate(ranked_list, start=1):
             content = item.get("content")
@@ -145,11 +143,15 @@ def rerank_rrf(
             seen_in_list.add(content)
             rrf_scores[content] = rrf_scores.get(content, 0.0) + 1.0 / (k + rank)
 
-            # Giữ bản ghi từ lần xuất hiện có thứ hạng cao nhất.
             if content not in content_map:
                 content_map[content] = item.copy()
                 first_seen[content] = seen_counter
                 seen_counter += 1
+
+            if "dense_score" in item:
+                content_map[content]["dense_score"] = item["dense_score"]
+            if "bm25_score" in item:
+                content_map[content]["bm25_score"] = item["bm25_score"]
 
     ranked_contents = sorted(
         rrf_scores,

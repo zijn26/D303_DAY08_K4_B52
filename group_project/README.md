@@ -1,105 +1,120 @@
-# Bài Tập Nhóm — E-commerce Support RAG Chatbot
+# 🛒 Bài Tập Nhóm — E-commerce Support RAG Chatbot
 
-## Mục Tiêu
-
-Sau khi hoàn thành bài cá nhân, nhóm ngồi lại để xây dựng **1 trong 2 sản phẩm**:
-
----
-
-## Yêu cầu 1: Sản phẩm nhóm RAG Chatbot
-
-Xây dựng chatbot trả lời câu hỏi về chính sách thương mại điện tử và hỗ trợ khách hàng liên quan.
-
-**Yêu cầu:**
-- Giao diện chat (Streamlit / Gradio / Chainlit)
-- Trả lời có citation (dựa trên Task 10)
-- Hỗ trợ follow-up questions (conversation memory)
-- Hiển thị source documents đã dùng
-
-**Stack gợi ý:**
-```
-Chainlit/Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
-```
+## 📌 Tổng Quan Dự Án
+Hệ thống **RAG Chatbot hỗ trợ e-commerce** giúp tự động tìm kiếm và trả lời các thắc mắc về chính sách thương mại điện tử (đổi trả, thanh toán, giao hàng, bảo mật, quy định người bán) dựa trên nguồn tài liệu chuẩn hóa, có kèm trích dẫn nguồn (Citation) minh bạch.
 
 ---
 
-## Yêu cầu 2: RAG Evaluation Pipeline
-
-Sử dụng **1 trong 3 framework** sau để evaluate pipeline RAG của nhóm:
-
-### Framework lựa chọn
-
-| Framework | Cài đặt | Đặc điểm |
-|-----------|---------|-----------|
-| [DeepEval](https://github.com/confident-ai/deepeval) | `pip install deepeval` | Nhiều metric built-in, dễ integrate với pytest |
-| [RAGAS](https://github.com/explodinggradients/ragas) | `pip install ragas` | Chuẩn industry cho RAG eval, 3 trục chính |
-| [TruLens](https://github.com/truera/trulens) | `pip install trulens` | Dashboard UI, feedback functions mạnh |
-
-### Yêu cầu Evaluation
-
-1. **Tạo Golden Dataset** — tối thiểu 15 cặp Q&A (question, expected_answer, expected_context)
-2. **Chạy evaluation** trên toàn bộ golden dataset với các metrics sau:
-   - **Faithfulness** — câu trả lời có bám đúng context không?
-   - **Answer Relevance** — câu trả lời có đúng câu hỏi không?
-   - **Context Recall** — retriever có lấy đủ evidence không?
-   - **Context Precision** — trong context lấy về, bao nhiêu % thực sự hữu ích?
-3. **So sánh A/B** — chạy eval trên ít nhất 2 config khác nhau (ví dụ: có reranking vs không reranking, hoặc hybrid vs dense-only)
-4. **Báo cáo** — bảng điểm + phân tích worst performers + đề xuất cải tiến
-
-Xem code mẫu (DeepEval/RAGAS/TruLens) chi tiết trong `README.md` gốc mục "Yêu cầu 2".
-
-### Deliverable Evaluation
-
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
-
----
-
-## Yêu Cầu Chung
-
-1. **Tích hợp pipeline** từ bài cá nhân của các thành viên
-2. **Demo hoạt động được** trong buổi trình bày (chạy local hoặc deploy)
-3. **Evaluation pipeline** chạy được và có báo cáo kết quả
-4. **Code push lên repository** chung của nhóm
-5. **README** mô tả kiến trúc và phân công (điền bên dưới)
-
----
-
-## Kiến Trúc Hệ Thống
+## 🏗️ Kiến Trúc Hệ Thống Hiện Tại
 
 ```
-[Vẽ diagram kiến trúc ở đây]
+                  ┌──────────────────────────────────────────┐
+                  │ 1. Dữ Liệu Đầu Vào (Legal PDFs + JSON)   │
+                  └────────────────────┬─────────────────────┘
+                                       │ MarkItDown
+                                       ▼
+                  ┌──────────────────────────────────────────┐
+                  │ 2. Chuẩn hóa Markdown (data/standardized)│
+                  └────────────────────┬─────────────────────┘
+                                       │ RecursiveCharacterTextSplitter (500/50)
+                                       ▼
+                  ┌──────────────────────────────────────────┐
+                  │ 3. Chunking & Indexing (baai/bge-m3)     │
+                  │    Lưu trữ persistent tại ChromaDB       │
+                  └────────────────────┬─────────────────────┘
+                                       │
+                       ┌───────────────┴───────────────┐
+                       ▼                               ▼
+        ┌─────────────────────────────┐ ┌─────────────────────────────┐
+        │ 4a. Dense Semantic Search   │ │ 4b. Sparse Lexical Search   │
+        │     (OpenRouter / Vector)   │ │     (BM25Okapi + Term Exp)  │
+        └──────────────┬──────────────┘ └──────────────┬──────────────┘
+                       │                               │
+                       └───────────────┬───────────────┘
+                                       ▼
+                  ┌──────────────────────────────────────────┐
+                  │ 5. Hybrid Fusion & Reranking (RRF)       │
+                  └────────────────────┬─────────────────────┘
+                                       │ (Best score < 0.3?)
+                       ┌───────────────┴───────────────┐
+             Không     ▼                               ▼ Có
+        ┌─────────────────────────────┐ ┌─────────────────────────────┐
+        │ 6a. Context Reordering      │ │ 6b. PageIndex Fallback      │
+        │     (Anti "Lost in Middle") │ │     (Vectorless Search)     │
+        └──────────────┬──────────────┘ └──────────────┬──────────────┘
+                       │                               │
+                       └───────────────┬───────────────┘
+                                       ▼
+                  ┌──────────────────────────────────────────┐
+                  │ 7. Generation (OpenRouter / OpenAI LLM)  │
+                  │    Trả lời tự động kèm Citation          │
+                  └────────────────────┬─────────────────────┘
+                                       ▼
+                  ┌──────────────────────────────────────────┐
+                  │ 8. Giao diện người dùng Streamlit UI     │
+                  └──────────────────────────────────────────┘
 ```
 
 ---
 
-## Phân Công Công Việc
+## 🛠️ Công Nghệ & Thành Phần Triển Khai
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Thành phần | Công nghệ / Thư viện | Mô tả chi tiết |
+|------------|──────────────────────|────────────────|
+| **Data Crawling & Parsing** | `crawl4ai`, `markitdown` | Crawl bài viết trợ giúp Shopee & chuyển PDF/DOCX sang Markdown |
+| **Chunking Strategy** | `RecursiveCharacterTextSplitter` | `CHUNK_SIZE = 500`, `CHUNK_OVERLAP = 50` |
+| **Embedding Model** | `baai/bge-m3` | Chạy qua OpenRouter API (vector 1024 dimensions) |
+| **Vector Database** | `ChromaDB` | Lưu trữ vector local persistent (`chroma_db/`) |
+| **Lexical Search** | `rank-bm25` | Giải thuật BM25Okapi có mở rộng từ khóa Anh-Việt |
+| **Hybrid Reranker** | `Reciprocal Rank Fusion (RRF)` | Gộp kết quả Dense & Sparse bằng công thức RRF $1/(60 + rank)$ |
+| **Fallback Retrieval** | `PageIndex` | Vectorless retrieval fallback khi điểm Cosine gốc < 0.3 |
+| **LLM Generation** | OpenRouter / OpenAI API | Xử lý chống *"Lost in the Middle"* & sinh câu trả lời có Citation |
+| **User Interface** | `Streamlit` | Giao diện Chatbot web tương tác trực quan (`app.py`) |
 
 ---
 
-## Hướng Dẫn Chạy
+## 🚀 Hướng Dẫn Kích Hoạt & Chạy Ứng Dụng
 
-```bash
-# Cài đặt dependencies
+### 1. Cài đặt môi trường
+```powershell
+# Kích hoạt môi trường ảo (.venv)
+.\.venv\Scripts\Activate.ps1
+
+# Cài đặt thư viện phụ thuộc
 pip install -r requirements.txt
-
-# Chạy app
-streamlit run app.py
-# hoặc
-chainlit run app.py
 ```
+
+### 2. Cấu hình file `.env`
+Tạo file `.env` tại thư mục gốc dự án:
+```ini
+OPENROUTER_API_KEY=sk-or-v1-...
+# Hoặc OPENAI_API_KEY=sk-proj-...
+```
+
+### 3. Thực thi Indexing dữ liệu
+```powershell
+python .\src\task4_chunking_indexing.py
+```
+
+### 4. Khởi chạy Giao diện Chatbot Streamlit
+```powershell
+python -m streamlit run app.py
+```
+👉 Sau đó truy cập giao diện tại **`http://localhost:8501`**.
 
 ---
 
-## Lưu ý
+## 👥 Phân Công Công Việc Nhóm
 
-Hãy giữ lại repo này nếu như bạn học track 3 giai đoạn 2, chúng ta sẽ phát triển tiếp dự án lên knowledge graph để khắc phục các câu hỏi hóc búa khi có các câu hỏi khó.
+| Thành viên | Nhiệm vụ | Trạng thái |
+|-----------|----------|------------|
+| Thành viên 1 | Data Crawling & Standardizing Markdown (Task 1-3) |  Hoàn thành |
+| Thành viên 2 | Chunking, Embedding & ChromaDB Indexing (Task 4-5) |  Hoàn thành |
+| Thành viên 3 | BM25 Lexical Search & RRF Reranking (Task 6-7) |  Hoàn thành |
+| Thành viên 4 | Retrieval Pipeline & PageIndex Fallback (Task 8-9) |  Hoàn thành |
+| Thành viên 5 | LLM Generation & Giao diện Streamlit App (Task 10 & UI) |  Hoàn thành |
+
+---
+
+## 📊 Hướng Dẫn Chạy Evaluation (RAGAS / DeepEval)
+Vui lòng tham khảo thư mục `group_project/evaluation/` để kiểm thử bộ **Golden Dataset (15+ Q&A)** và đo lường các chỉ số *Faithfulness, Answer Relevance, Context Recall, Context Precision*.
