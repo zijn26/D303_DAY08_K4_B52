@@ -19,7 +19,14 @@ from pathlib import Path
 
 # TODO: Load corpus từ data/standardized/ hoặc từ vector store
 CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
-
+def load_corpus() -> list[dict]:
+    try:
+        from src.task4_chunking_indexing import load_documents, chunk_documents
+    except ImportError:
+        from task4_chunking_indexing import load_documents, chunk_documents
+    docs = load_documents()
+    chunks = chunk_documents(docs)
+    return chunks
 
 def build_bm25_index(corpus: list[dict]):
     """
@@ -30,13 +37,10 @@ def build_bm25_index(corpus: list[dict]):
     """
     # TODO: Implement BM25 index
     #
-    # from rank_bm25 import BM25Okapi
-    #
-    # # Tokenize - có thể đơn giản split(), hoặc dùng underthesea cho tiếng Việt
-    # tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
-    # bm25 = BM25Okapi(tokenized_corpus)
-    # return bm25
-    raise NotImplementedError("Implement build_bm25_index")
+    from rank_bm25 import BM25Okapi
+    tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
+    bm25 = BM25Okapi(tokenized_corpus)
+    return bm25
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
