@@ -1,97 +1,77 @@
 [
   {
-    "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
-    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Thời hạn tối đa để gửi yêu cầu Trả hàng/Hoàn tiền đối với hầu hết các đơn hàng là bao lâu?",
+    "expected_answer": "15 ngày kể từ lúc đơn hàng được cập nhật trạng thái 'Giao hàng thành công' (hoặc 15 ngày kể từ khi bấm 'Đã nhận được hàng' / 20 ngày kể từ 'Lấy hàng thành công' đối với đơn do Người bán tự vận chuyển).",
+    "expected_context": "data/landing/legal/returns-refund-policy-shopee.pdf, mục 1.2 Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền"
   },
   {
-    "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
-    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
-    "expected_context": "Trang Payment Methods Overview"
+    "question": "Đối với đơn hàng giao thực phẩm tươi sống/đông lạnh, thời hạn gửi yêu cầu Trả hàng/Hoàn tiền là bao lâu?",
+    "expected_answer": "Trong vòng 24 giờ kể từ lúc đơn hàng được cập nhật trạng thái 'Giao hàng thành công' (trừ lý do Chưa nhận được hàng).",
+    "expected_context": "data/landing/legal/returns-refund-policy-shopee.pdf, mục 1.2 Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền"
   },
   {
-    "question": "Người bán không được đăng bán những sản phẩm nào?",
-    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
-    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+    "question": "Yêu cầu Trả hàng/Hoàn tiền của người mua sẽ được Shopee phản hồi trong thời gian bao lâu?",
+    "expected_answer": "Trong vòng 3-5 ngày làm việc (không tính thứ Bảy, Chủ Nhật và ngày nghỉ lễ/Tết theo quy định pháp luật).",
+    "expected_context": "data/landing/legal/returns-refund-policy-shopee.pdf, mục 1.2 Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền"
   },
   {
-    "question": "Điều kiện để sản phẩm được chấp nhận trả hàng/hoàn tiền là gì?",
-    "expected_answer": "Sản phẩm phải còn nguyên vẹn, chưa qua sử dụng, còn đầy đủ tem/nhãn/phụ kiện/quà tặng kèm và hóa đơn (nếu có), trừ trường hợp lỗi do người bán hoặc hàng không đúng mô tả.",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Shopee hỗ trợ những phương thức thanh toán nào cho đơn hàng trên Sàn?",
+    "expected_answer": "Thẻ tín dụng/ghi nợ (hoặc trả góp qua thẻ), Thanh toán khi nhận hàng (COD), thẻ ATM nội địa/internet banking, SPayLater, Ví ShopeePay, Apple Pay/Google Pay, thanh toán qua dịch vụ ngân hàng trực tuyến, và các phương thức khác khả dụng theo từng thời điểm.",
+    "expected_context": "data/landing/legal/terms-of-service-shopee.pdf, mục 9.1 Phương thức thanh toán"
   },
   {
-    "question": "Thời gian hoàn tiền cho người mua sau khi yêu cầu trả hàng được duyệt là bao lâu?",
-    "expected_answer": "Từ 3-7 ngày làm việc tùy theo phương thức thanh toán ban đầu (ShopeePay hoàn tiền nhanh hơn thẻ ngân hàng).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Refund Processing Time"
+    "question": "Nếu thanh toán đơn hàng bằng thẻ tín dụng/ghi nợ, khi hoàn tiền thì tiền sẽ về đâu và mất bao lâu?",
+    "expected_answer": "Tiền được hoàn về đúng thẻ tín dụng/ghi nợ đã dùng để thanh toán, thời gian nhận được là 7-14 ngày làm việc tùy theo ngân hàng.",
+    "expected_context": "data/landing/news/article_02.json — [Trả hàng/Hoàn tiền] Thời gian nhận tiền hoàn và cách kiểm tra tiền hoàn"
   },
   {
-    "question": "Ai chịu phí vận chuyển khi trả hàng do lỗi của người bán?",
-    "expected_answer": "Người bán chịu toàn bộ phí vận chuyển hai chiều nếu sản phẩm bị lỗi, hư hỏng, hoặc giao sai so với mô tả/đơn hàng.",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return Shipping Fee"
+    "question": "Thời gian nhận tiền hoàn vào Ví ShopeePay sau khi Shopee chấp nhận yêu cầu hoàn tiền là bao lâu?",
+    "expected_answer": "24 giờ, với điều kiện Ví ShopeePay vẫn đang hoạt động bình thường và còn liên kết với tài khoản Shopee.",
+    "expected_context": "data/landing/news/article_02.json — [Trả hàng/Hoàn tiền] Thời gian nhận tiền hoàn và cách kiểm tra tiền hoàn"
   },
   {
-    "question": "Phí vận chuyển được tính dựa trên những yếu tố nào?",
-    "expected_answer": "Trọng lượng/kích thước đơn hàng, khoảng cách giao hàng, đơn vị vận chuyển được chọn, và các chương trình miễn phí vận chuyển (freeship) đang áp dụng.",
-    "expected_context": "Trang Shipping Policy, mục Shipping Fee Calculation"
+    "question": "Người bán trên Shopee không được đăng bán những loại sản phẩm nào?",
+    "expected_answer": "Hàng giả, hàng nhái, hàng nhập lậu, hàng vi phạm quyền sở hữu trí tuệ, và các hàng hóa/dịch vụ/thông tin vi phạm pháp luật hoặc quy định của Shopee.",
+    "expected_context": "data/landing/legal/terms-of-service-shopee.pdf, mục về Nội dung bị cấm/vi phạm sở hữu trí tuệ"
   },
   {
-    "question": "Khi đơn hàng bị giao trễ so với thời gian dự kiến, khách hàng được hỗ trợ như thế nào?",
-    "expected_answer": "Khách hàng có thể liên hệ bộ phận hỗ trợ để được cập nhật trạng thái, và có thể nhận voucher/hoàn phí vận chuyển như một hình thức bồi thường tùy chính sách của đơn vị vận chuyển.",
-    "expected_context": "Trang Shipping Policy, mục Delayed Delivery"
+    "question": "Khi chọn hình thức trả hàng 'Tự sắp xếp', ai là người thanh toán phí vận chuyển trả hàng ban đầu?",
+    "expected_answer": "Người mua cần thanh toán trước phí trả hàng; Shopee sẽ hỗ trợ hoàn lại khoản phí này trong vòng 3-5 ngày làm việc nếu đáp ứng đủ điều kiện hỗ trợ phí trả hàng.",
+    "expected_context": "data/landing/news/article_04.json — [Trả hàng/Hoàn tiền] Các phương thức gửi hàng hoàn trả và phí hoàn trả"
   },
   {
-    "question": "Quy trình khiếu nại khi nhận được hàng lỗi hoặc không đúng mô tả gồm những bước nào?",
-    "expected_answer": "Người mua gửi yêu cầu Trả hàng/Hoàn tiền kèm hình ảnh/video bằng chứng trong thời hạn quy định, sàn/người bán xem xét và phản hồi, sau đó xử lý hoàn tiền hoặc đổi hàng nếu yêu cầu hợp lệ.",
-    "expected_context": "Trang Customer Support, mục Complaint Handling Process"
+    "question": "Nếu người mua yêu cầu Trả hàng/Hoàn tiền cho toàn bộ sản phẩm trong đơn hàng và được hoàn đầy đủ giá trị đã thanh toán, phí vận chuyển ban đầu có được hoàn lại không?",
+    "expected_answer": "Có, phí vận chuyển ban đầu sẽ được hoàn lại cho người mua. Nếu chỉ yêu cầu hoàn cho một số sản phẩm nhất định trong đơn thì phí vận chuyển ban đầu sẽ không được hoàn.",
+    "expected_context": "data/landing/news/article_04.json — [Trả hàng/Hoàn tiền] Các phương thức gửi hàng hoàn trả và phí hoàn trả"
   },
   {
-    "question": "Người dùng cần làm gì nếu quên mật khẩu tài khoản?",
-    "expected_answer": "Chọn 'Quên mật khẩu' tại trang đăng nhập, xác thực qua số điện thoại hoặc email đã liên kết, sau đó đặt lại mật khẩu mới.",
-    "expected_context": "Trang Account & Security, mục Password Recovery"
+    "question": "Đơn vị vận chuyển hỗ trợ tối đa bao nhiêu lần đến lấy hàng hoàn trả cho người mua?",
+    "expected_answer": "Tối đa 3 lần lấy hàng khác nhau trong vòng 1-3 ngày kể từ ngày lấy hàng đã chọn.",
+    "expected_context": "data/landing/news/article_04.json — [Trả hàng/Hoàn tiền] Các phương thức gửi hàng hoàn trả và phí hoàn trả"
   },
   {
-    "question": "Chính sách bảo mật thông tin khách hàng quy định dữ liệu cá nhân được sử dụng cho mục đích gì?",
-    "expected_answer": "Dữ liệu cá nhân chỉ được dùng để xử lý đơn hàng, giao hàng, chăm sóc khách hàng và cải thiện dịch vụ; không được chia sẻ cho bên thứ ba nếu không có sự đồng ý, trừ trường hợp pháp luật yêu cầu.",
-    "expected_context": "Trang Privacy Policy, mục Data Usage"
+    "question": "Nếu người mua chưa nhận được hàng nhưng hệ thống đã cập nhật trạng thái 'Giao hàng thành công', người mua nên làm gì?",
+    "expected_answer": "Nếu vẫn trong 24 giờ kể từ lúc trạng thái bị cập nhật sai, tiếp tục chờ đơn vị vận chuyển giao hàng; nếu đã quá 24 giờ mà vẫn chưa nhận được hàng, bấm Trả hàng/Hoàn tiền và chọn lý do 'Chưa nhận được hàng' để Shopee xử lý khiếu nại với đơn vị vận chuyển.",
+    "expected_context": "data/landing/news/article_03.json — [Đơn hàng] Tôi phải làm gì nếu đơn hàng bị cập nhật sai trạng thái/chưa nhận được hàng?"
   },
   {
-    "question": "Voucher/mã giảm giá có được áp dụng đồng thời với chương trình flash sale không?",
-    "expected_answer": "Tùy loại voucher; một số voucher toàn sàn có thể áp dụng cùng flash sale, nhưng voucher của shop thường không cộng dồn với giá flash sale đã giảm sâu, chi tiết được ghi rõ trong điều kiện từng voucher.",
-    "expected_context": "Trang Promotions & Vouchers Policy, mục Voucher Stacking Rules"
+    "question": "Khi gặp lỗi thanh toán (M01/D01) vì tài khoản Shopee ghi nhận dấu hiệu bất thường, người mua nên xử lý thế nào?",
+    "expected_answer": "Gỡ cài đặt các công cụ/phần mềm bất thường hoặc khôi phục lại cài đặt gốc trên thiết bị đang dùng Shopee, sau đó thực hiện thanh toán lại như giao dịch bình thường, đồng thời tham khảo Điều khoản dịch vụ của Shopee.",
+    "expected_context": "data/landing/news/article_05.json — [Lỗi] Tại sao tôi không thể thanh toán đơn hàng trên Shopee?"
   },
   {
-    "question": "Sản phẩm điện tử có được bảo hành theo chính sách của sàn không?",
-    "expected_answer": "Sản phẩm điện tử được bảo hành theo chính sách của nhà sản xuất/nhà phân phối chính hãng đi kèm phiếu bảo hành; sàn chỉ hỗ trợ trong thời gian đổi trả nếu lỗi do vận chuyển hoặc lỗi kỹ thuật ngay khi nhận hàng.",
-    "expected_context": "Trang Warranty Policy, mục Electronics Warranty"
+    "question": "Shopee thu thập và sử dụng thông tin cá nhân của người dùng cho những mục đích nào?",
+    "expected_answer": "Cho các mục đích như đánh giá pháp lý, nhận biết khách hàng, xác minh thông tin, phòng chống gian lận, cung cấp và cải thiện dịch vụ, chăm sóc khách hàng, và tiếp thị/quảng cáo (khi được người dùng đồng ý), có thể chia sẻ với các bên thứ ba/công ty liên kết khi cần thiết để cung cấp dịch vụ.",
+    "expected_context": "data/landing/legal/privacy-policy-shopee.pdf, mục về mục đích thu thập và sử dụng thông tin"
   },
   {
-    "question": "Người mua có thể hủy đơn hàng sau khi đã thanh toán hay không?",
-    "expected_answer": "Có thể hủy nếu đơn hàng chưa được người bán xác nhận/chuẩn bị hàng; sau khi đơn đã được giao cho đơn vị vận chuyển thì phải chờ nhận hàng rồi làm yêu cầu trả hàng/hoàn tiền.",
-    "expected_context": "Trang Order Management Policy, mục Order Cancellation"
+    "question": "Mã giảm giá do Người bán phát hành (Shop Voucher) có được hoàn lại khi yêu cầu Trả hàng/Hoàn tiền được chấp nhận không?",
+    "expected_answer": "Không, Shop Voucher (mã do Người bán phát hành) và Mã miễn phí vận chuyển sẽ không được hoàn lại trong bất cứ trường hợp nào; người mua có thể chủ động liên hệ Người bán để được hỗ trợ.",
+    "expected_context": "data/landing/legal/returns-refund-policy-shopee.pdf, mục 2. Quy định chung về việc hoàn lại Mã giảm giá/Shopee Xu"
   },
   {
-    "question": "Người bán có được tự ý hủy đơn hàng đã xác nhận không?",
-    "expected_answer": "Người bán không được tự ý hủy đơn đã xác nhận trừ trường hợp hết hàng hoặc lý do bất khả kháng; hủy đơn không hợp lệ có thể dẫn đến phạt điểm hiệu suất hoặc khóa shop.",
-    "expected_context": "Trang Seller Regulations, mục Order Fulfillment Obligations"
-  },
-  {
-    "question": "Đánh giá (review) sản phẩm có thể bị gỡ bỏ trong trường hợp nào?",
-    "expected_answer": "Đánh giá chứa nội dung xúc phạm, sai sự thật, quảng cáo, thông tin cá nhân, hoặc vi phạm quy định cộng đồng có thể bị gỡ bỏ.",
-    "expected_context": "Trang Community Guidelines, mục Review & Rating Policy"
-  },
-  {
-    "question": "Khách hàng liên hệ bộ phận chăm sóc khách hàng bằng những kênh nào?",
-    "expected_answer": "Live chat trong ứng dụng, hotline tổng đài, email hỗ trợ, và fanpage/mạng xã hội chính thức của sàn.",
-    "expected_context": "Trang Customer Support, mục Contact Channels"
-  },
-  {
-    "question": "Khi tranh chấp giữa người mua và người bán không được giải quyết, ai sẽ đứng ra can thiệp?",
-    "expected_answer": "Bộ phận giải quyết tranh chấp của sàn sẽ can thiệp, xem xét bằng chứng từ cả hai bên và đưa ra quyết định cuối cùng về việc hoàn tiền, đổi hàng hoặc giữ nguyên đơn hàng.",
-    "expected_context": "Trang Dispute Resolution Policy, mục Escalation Process"
-  },
-  {
-    "question": "Sản phẩm thực phẩm tươi sống/đông lạnh có áp dụng chính sách đổi trả giống các sản phẩm khác không?",
-    "expected_answer": "Không, thực phẩm tươi sống/đông lạnh chỉ được yêu cầu đổi trả trong vòng 24 giờ kể từ khi nhận hàng, ngắn hơn nhiều so với thời hạn 15 ngày của các sản phẩm thông thường.",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Để đổi phương thức thanh toán cho đơn hàng trả trước, người mua thực hiện các bước nào?",
+    "expected_answer": "Bước 1: Vào mục Tôi > Chờ xác nhận > chọn đơn hàng cần đổi phương thức thanh toán. Bước 2: Chọn 'Đổi phương thức thanh toán' > chọn phương thức thanh toán mới. Bước 3: Hoàn tất các bước thanh toán và đặt hàng tiếp theo.",
+    "expected_context": "data/landing/news/article_01.json — Hướng Dẫn Đổi Phương Thức Thanh Toán Cho Đơn Hàng Trả Trước"
   }
 ]

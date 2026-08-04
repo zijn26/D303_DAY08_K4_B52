@@ -18,22 +18,35 @@ khác hay tạo key mới KHÔNG reset quota). Nếu chạy full 15+ câu hỏi 
 chừng, thử giảm xuống subset 5 câu để chạy kịp trong buổi, hoặc nạp $10 credit để mở khóa
 1000 request/ngày.
 
-⚠️ TRẠNG THÁI HIỆN TẠI: src/task9_retrieval_pipeline.py (retrieve) và
-src/task10_generation.py (generate_with_citation) chưa được implement (các task nền
-tảng task4-8 cũng vậy). Vì vậy __main__ bên dưới dùng MockRAGPipeline để có thể chạy thử
-toàn bộ luồng RAGAS (question → answer/contexts → metrics → results.md) ngay bây giờ.
-Khi pipeline thật (task4-10) hoàn thiện, đổi `pipeline = MockRAGPipeline()` thành
-`from src.task10_generation import generate_with_citation` và bọc nó cùng interface
-(xem `RealRAGPipeline` bên dưới) rồi chạy lại.
+Pipeline thật (task4-10: chunking, semantic/lexical search, reranking, generation) đã
+implement xong — __main__ bên dưới dùng `RealRAGPipeline` (bọc task9.retrieve +
+task10.generate_with_citation). `MockRAGPipeline` vẫn được giữ lại làm placeholder để
+test nhanh luồng RAGAS mà không cần gọi LLM/embedding thật.
+
+Cần OPENROUTER_API_KEY (hoặc OPENAI_API_KEY) trong `.env` cho cả 2 mục đích: (1) LLM sinh
+câu trả lời trong task10, và (2) LLM giám khảo (judge) mà RAGAS dùng để chấm faithfulness/
+answer_relevancy/context_recall/context_precision.
 """
 
 import json
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Console Windows mặc định dùng cp1252, không encode được tiếng Việt có dấu khi print().
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+# Cho phép `import src...` chạy đúng dù script được gọi trực tiếp
+# (python group_project/evaluation/eval_pipeline.py) hay qua `python -m ...`.
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 GOLDEN_DATASET_PATH = Path(__file__).parent / "golden_dataset.json"
 RESULTS_PATH = Path(__file__).parent / "results.md"
@@ -71,11 +84,65 @@ class MockRAGPipeline:
 
 
 class RealRAGPipeline:
-    """Bọc src.task10_generation.generate_with_citation vào interface chung."""
+    """
+    Bọc pipeline thật (task9 retrieve + task10 generation) vào interface chung.
+
+    `use_reranking` cho phép compare_configs() làm A/B thật sự (hybrid+rerank vs
+    dense-only), vì generate_with_citation() gốc không expose tham số này —
+    ở đây ta gọi lại retrieve() trực tiếp với cờ tương ứng rồi tái dùng phần
+    reorder/format/LLM-call của task10.
+    """
+
+    def __init__(self, use_reranking: bool = True):
+        self.use_reranking = use_reranking
+
+    def set_config(self, use_reranking: bool = True, **_ignored) -> None:
+        self.use_reranking = use_reranking
 
     def generate_with_citation(self, query: str, golden_item: dict | None = None) -> dict:
-        from src.task10_generation import generate_with_citation
-        return generate_with_citation(query)
+        from src.task9_retrieval_pipeline import retrieve
+        from src.task10_generation import (
+            TOP_K, TOP_P, TEMPERATURE, LLM_MODEL, SYSTEM_PROMPT,
+            reorder_for_llm, format_context,
+        )
+
+        chunks = retrieve(query, top_k=TOP_K, use_reranking=self.use_reranking)
+        reordered = reorder_for_llm(chunks)
+        context = format_context(reordered)
+        user_message = f"Context:\n{context}\n\n---\n\nQuestion: {query}"
+
+        api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            ret_source = chunks[0].get("source", "hybrid") if chunks else "none"
+            return {
+                "answer": "⚠️ [Chưa cấu hình API Key] Vui lòng điền OPENROUTER_API_KEY hoặc OPENAI_API_KEY vào .env",
+                "sources": chunks,
+                "retrieval_source": ret_source,
+            }
+
+        from openai import OpenAI
+        if os.getenv("OPENROUTER_API_KEY"):
+            client = OpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url="https://openrouter.ai/api/v1")
+            model_name = os.getenv("LLM_MODEL", LLM_MODEL)
+        else:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            model_name = "gpt-4o-mini"
+
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=TEMPERATURE,
+            top_p=TOP_P,
+        )
+
+        return {
+            "answer": response.choices[0].message.content,
+            "sources": chunks,
+            "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none",
+        }
 
 
 # =============================================================================
@@ -133,11 +200,12 @@ def _build_ragas_llm_and_embeddings():
     LLM: dùng OpenRouter (giống Task 10) qua ChatOpenAI với base_url tuỳ chỉnh —
     cần OPENROUTER_API_KEY (hoặc OPENAI_API_KEY để fallback thẳng OpenAI).
 
-    Embeddings: dùng sentence-transformers CHẠY LOCAL (không tốn API call) cho
-    metric answer_relevancy, vì OpenRouter không có endpoint embeddings.
+    Embeddings: gọi qua OpenRouter (model baai/bge-m3 — cùng model task4 đã dùng để
+    build chroma_db/) cho metric answer_relevancy. KHÔNG dùng sentence-transformers
+    local vì môi trường này có xung đột numpy/scipy làm sentence-transformers crash
+    khi import (numpy 1.26 nhưng scipy cài đòi numpy>=2.0) — gọi API tránh được import chain đó.
     """
-    from langchain_openai import ChatOpenAI
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from ragas.llms import LangchainLLMWrapper
     from ragas.embeddings import LangchainEmbeddingsWrapper
 
@@ -151,19 +219,24 @@ def _build_ragas_llm_and_embeddings():
             base_url="https://openrouter.ai/api/v1",
             temperature=0,
         )
+        embeddings = OpenAIEmbeddings(
+            model="baai/bge-m3",
+            api_key=openrouter_key,
+            base_url="https://openrouter.ai/api/v1",
+            check_embedding_ctx_length=False,
+        )
     elif openai_key:
         chat = ChatOpenAI(
             model=os.getenv("RAGAS_JUDGE_MODEL", "gpt-4o-mini"),
             api_key=openai_key,
             temperature=0,
         )
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_key)
     else:
         raise RuntimeError(
             "Cần OPENROUTER_API_KEY hoặc OPENAI_API_KEY trong .env để RAGAS gọi LLM giám khảo "
             "(xem .env.example)."
         )
-
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     return LangchainLLMWrapper(chat), LangchainEmbeddingsWrapper(embeddings)
 
@@ -253,9 +326,9 @@ def compare_configs(rag_pipeline, golden_dataset: list[dict]) -> dict:
     - hybrid_rerank: hybrid search + reranking (mặc định, use_reranking=True)
     - dense_only: chỉ dense/semantic search, không reranking (use_reranking=False)
 
-    Lưu ý: MockRAGPipeline không phân biệt config (luôn trả expected_answer),
-    nên hai config sẽ cho điểm gần như giống nhau khi chạy mock — đây là hạn chế
-    kỳ vọng cho tới khi cắm RealRAGPipeline (retrieve() thật có tham số use_reranking).
+    Lưu ý: chỉ RealRAGPipeline phân biệt được config (qua set_config). Nếu chạy với
+    MockRAGPipeline (không có set_config), hai config sẽ cho điểm giống hệt nhau vì
+    mock luôn trả expected_answer bất kể use_reranking.
     """
     configs = {
         "hybrid_rerank": {"use_reranking": True},
@@ -306,14 +379,33 @@ def export_results(results, comparison: dict):
             content += f"| {row['question']} | " + " | ".join(scores) + " |\n"
 
     content += "\n## Recommendations\n\n"
-    content += (
-        "- Kết quả trên chạy với MockRAGPipeline (placeholder trả lời bằng chính "
-        "expected_answer/expected_context) — điểm số CHƯA phản ánh RAG pipeline thật.\n"
-        "- Sau khi task4-10 (chunking, semantic/lexical search, reranking, generation) "
-        "hoàn thiện, chạy lại với `RealRAGPipeline` để có kết quả thực tế.\n"
-        "- Khi có kết quả thật, tập trung phân tích các câu hỏi có context_precision/"
-        "context_recall thấp trước — dấu hiệu retrieval chưa lấy đúng evidence.\n"
+    recs = []
+    weak_metrics = [
+        col for col in ["context_precision", "context_recall", "faithfulness", "answer_relevancy"]
+        if col in results.columns and results[col].mean() < 0.7
+    ]
+    if "context_precision" in weak_metrics or "context_recall" in weak_metrics:
+        recs.append(
+            "- context_precision/context_recall thấp → retriever (task9) chưa lấy đủ/đúng "
+            "evidence; cân nhắc calibrate lại SCORE_THRESHOLD hoặc trọng số RRF."
+        )
+    if "faithfulness" in weak_metrics:
+        recs.append(
+            "- faithfulness thấp → câu trả lời của LLM (task10) không bám sát context được "
+            "cấp; cân nhắc siết lại SYSTEM_PROMPT hoặc giảm temperature."
+        )
+    if "answer_relevancy" in weak_metrics:
+        recs.append(
+            "- answer_relevancy thấp → câu trả lời lạc đề so với câu hỏi; kiểm tra lại "
+            "reorder_for_llm/format_context có giữ đúng câu hỏi gốc trong prompt không."
+        )
+    if not recs:
+        recs.append("- Tất cả metric đều ≥ 0.7 trên golden dataset hiện tại — chưa phát hiện điểm yếu rõ rệt.")
+    recs.append(
+        "- Xem bảng A/B Comparison ở trên để quyết định có nên bật reranking "
+        "(use_reranking=True) trong production hay không."
     )
+    content += "\n".join(recs) + "\n"
 
     RESULTS_PATH.write_text(content, encoding="utf-8")
     print(f"✓ Results exported to {RESULTS_PATH}")
@@ -323,10 +415,7 @@ if __name__ == "__main__":
     golden_dataset = load_golden_dataset()
     print(f"Loaded {len(golden_dataset)} test cases")
 
-    # ⚠ Pipeline thật (src.task10_generation.generate_with_citation) chưa implement
-    # xong (phụ thuộc task4-9 cũng đang là TODO). Dùng MockRAGPipeline để test luồng
-    # RAGAS end-to-end ngay bây giờ. Đổi sang `RealRAGPipeline()` khi pipeline sẵn sàng.
-    pipeline = MockRAGPipeline()
+    pipeline = RealRAGPipeline()
 
     results = evaluate_with_ragas(pipeline, golden_dataset)
     print("\n=== RAGAS scores (per question) ===")
