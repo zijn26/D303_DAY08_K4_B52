@@ -350,60 +350,204 @@ def compare_configs(rag_pipeline, golden_dataset: list[dict]) -> dict:
 # Export Results
 # =============================================================================
 
+METRIC_COLS = ["faithfulness", "answer_relevancy", "context_recall", "context_precision"]
+
+METRIC_INFO = {
+    "faithfulness": (
+        "Faithfulness",
+        "câu trả lời có bám đúng nội dung trong context được cấp không (không bịa đặt/suy diễn ngoài nguồn)",
+    ),
+    "answer_relevancy": (
+        "Answer Relevancy",
+        "câu trả lời có thực sự trả lời đúng trọng tâm câu hỏi đặt ra không",
+    ),
+    "context_recall": (
+        "Context Recall",
+        "retriever có lấy về đủ thông tin (evidence) cần thiết để trả lời đúng không",
+    ),
+    "context_precision": (
+        "Context Precision",
+        "trong số các đoạn context lấy về, bao nhiêu phần trăm thực sự liên quan/hữu ích (không rác)",
+    ),
+}
+
+
+def _excerpt(text: str, n: int = 160) -> str:
+    """Rút gọn text dài, escape ký tự '|' để không vỡ bảng markdown."""
+    text = (text or "").replace("\n", " ").replace("|", "/").strip()
+    return text if len(text) <= n else text[:n].rstrip() + "…"
+
+
+def _verdict(score: float) -> str:
+    if score >= 0.85:
+        return "rất tốt"
+    if score >= 0.7:
+        return "chấp nhận được"
+    if score >= 0.5:
+        return "yếu, cần cải thiện"
+    return "kém, ưu tiên xử lý"
+
+
 def export_results(results, comparison: dict):
-    """Export evaluation results to results.md"""
-    metric_cols = ["faithfulness", "answer_relevancy", "context_recall", "context_precision"]
-
+    """Export evaluation results to results.md — có phân tích chi tiết từng phần."""
     content = "# RAG Evaluation Results\n\n"
+    content += (
+        f"*Đánh giá bằng RAGAS trên {len(results)} câu hỏi (golden_dataset.json) về chính sách "
+        "thương mại điện tử/hỗ trợ khách hàng (trả hàng-hoàn tiền, thanh toán, vận chuyển, quyền "
+        "riêng tư), lấy từ `data/landing/legal` và `data/landing/news`. LLM giám khảo + LLM sinh "
+        "câu trả lời đều qua OpenRouter.*\n\n"
+    )
 
+    # =========================================================================
+    # Overall Scores
+    # =========================================================================
     content += "## Overall Scores\n\n"
-    content += "| Metric | Score |\n|--------|-------|\n"
-    for col in metric_cols:
-        if col in results.columns:
-            content += f"| {col} | {results[col].mean():.3f} |\n"
+    content += "| Metric | Mean | Std | Min | Max | Đánh giá |\n|---|---|---|---|---|---|\n"
+    for col in METRIC_COLS:
+        label, _ = METRIC_INFO[col]
+        s = results[col]
+        content += (
+            f"| {label} | {s.mean():.3f} | {s.std():.3f} | {s.min():.3f} | {s.max():.3f} "
+            f"| {_verdict(s.mean())} |\n"
+        )
 
+    content += "\n**Phân tích từng metric:**\n\n"
+    for col in METRIC_COLS:
+        label, desc = METRIC_INFO[col]
+        s = results[col]
+        low = results[s < 0.7]
+        content += f"- **{label}** ({desc}) — trung bình **{s.mean():.3f}**, {_verdict(s.mean())}. "
+        if len(low) == 0:
+            content += "Không có câu hỏi nào dưới ngưỡng 0.7.\n"
+        else:
+            worst_row = results.loc[s.idxmin()]
+            content += (
+                f"{len(low)}/{len(s)} câu hỏi dưới ngưỡng 0.7 (độ lệch chuẩn {s.std():.3f} cho thấy "
+                f"{'kết quả khá đồng đều' if s.std() < 0.2 else 'kết quả dao động mạnh giữa các câu hỏi'}). "
+                f"Thấp nhất: \"{_excerpt(worst_row['question'], 70)}\" ({s.min():.3f}).\n"
+            )
+
+    # =========================================================================
+    # A/B Comparison
+    # =========================================================================
     content += "\n## A/B Comparison\n\n"
-    content += "| Config | " + " | ".join(metric_cols) + " |\n"
-    content += "|--------|" + "--------|" * len(metric_cols) + "\n"
+    content += (
+        "So sánh `hybrid_rerank` (semantic + lexical + RRF + rerank) vs `dense_only` "
+        "(chỉ semantic search, không rerank) — xem `RealRAGPipeline.set_config` trong "
+        "`eval_pipeline.py` và `retrieve()` trong `src/task9_retrieval_pipeline.py`.\n\n"
+    )
+    content += "| Config | " + " | ".join(METRIC_INFO[c][0] for c in METRIC_COLS) + " |\n"
+    content += "|--------|" + "--------|" * len(METRIC_COLS) + "\n"
     for config_name, df in comparison.items():
-        row = [f"{df[col].mean():.3f}" if col in df.columns else "n/a" for col in metric_cols]
+        row = [f"{df[col].mean():.3f}" if col in df.columns else "n/a" for col in METRIC_COLS]
         content += f"| {config_name} | " + " | ".join(row) + " |\n"
 
-    content += "\n## Worst Performers\n\n"
-    content += "| Question | " + " | ".join(metric_cols) + " |\n"
-    content += "|----------|" + "--------|" * len(metric_cols) + "\n"
-    if "faithfulness" in results.columns:
-        worst = results.sort_values("faithfulness").head(3)
-        for _, row in worst.iterrows():
-            scores = [f"{row[col]:.3f}" if col in results.columns else "n/a" for col in metric_cols]
-            content += f"| {row['question']} | " + " | ".join(scores) + " |\n"
+    if "hybrid_rerank" in comparison and "dense_only" in comparison:
+        content += "\n**Phân tích chênh lệch (hybrid_rerank − dense_only):**\n\n"
+        content += "| Metric | Delta | Nhận xét |\n|---|---|---|\n"
+        wins_rerank, wins_dense, ties = 0, 0, 0
+        for col in METRIC_COLS:
+            label, _ = METRIC_INFO[col]
+            delta = comparison["hybrid_rerank"][col].mean() - comparison["dense_only"][col].mean()
+            if abs(delta) < 0.02:
+                note = "gần như không khác biệt"
+                ties += 1
+            elif delta > 0:
+                note = "hybrid_rerank tốt hơn"
+                wins_rerank += 1
+            else:
+                note = "dense_only tốt hơn"
+                wins_dense += 1
+            content += f"| {label} | {delta:+.3f} | {note} |\n"
 
-    content += "\n## Recommendations\n\n"
+        content += "\n"
+        if wins_rerank > wins_dense:
+            summary = (
+                "`hybrid_rerank` thắng ở nhiều metric hơn — reranking đang có đóng góp tích cực, "
+                "đáng để giữ trong production."
+            )
+        elif wins_dense > wins_rerank:
+            summary = (
+                "`dense_only` thắng ở nhiều metric hơn hoặc bằng — reranking hiện KHÔNG cải thiện "
+                "chất lượng đầu ra tương xứng với chi phí (thêm 1 bước gọi model/API), cân nhắc tắt "
+                "reranking hoặc đổi RERANK_METHOD/lại trọng số RRF."
+            )
+        else:
+            summary = "Hai config gần như tương đương trên golden dataset hiện tại."
+        content += (
+            f"{summary} Lưu ý: golden dataset chỉ có {len(results)} câu hỏi, chênh lệch nhỏ "
+            "(<0.05) nhiều khả năng là nhiễu thống kê chứ chưa đủ mạnh để kết luận chắc chắn — "
+            "nên mở rộng golden dataset trước khi đưa ra quyết định cuối cùng về reranking.\n"
+        )
+
+    # =========================================================================
+    # Worst Performers
+    # =========================================================================
+    content += "\n## Worst Performers\n\n"
+    content += (
+        "Xếp hạng theo điểm trung bình 4 metric (thấp nhất trước), kèm trích đoạn answer/ground_truth "
+        "thực tế để chẩn đoán nguyên nhân.\n\n"
+    )
+    results = results.copy()
+    results["avg_score"] = results[METRIC_COLS].mean(axis=1)
+    worst = results.sort_values("avg_score").head(5)
+
+    for _, row in worst.iterrows():
+        content += f"### \"{_excerpt(row['question'], 100)}\" (avg={row['avg_score']:.3f})\n\n"
+        content += "| " + " | ".join(METRIC_INFO[c][0] for c in METRIC_COLS) + " |\n"
+        content += "|" + "---|" * len(METRIC_COLS) + "\n"
+        content += "| " + " | ".join(f"{row[c]:.3f}" for c in METRIC_COLS) + " |\n\n"
+
+        weakest_metric = min(METRIC_COLS, key=lambda c: row[c])
+        content += f"- **Answer thực tế:** {_excerpt(row['answer'], 220)}\n"
+        content += f"- **Ground truth:** {_excerpt(row['ground_truth'], 220)}\n"
+        row_contexts = row.get("contexts")
+        if row_contexts is not None and len(row_contexts) > 0:
+            content += f"- **Context #1 lấy về:** {_excerpt(row_contexts[0], 220)}\n"
+        content += f"- **Chẩn đoán:** điểm yếu nhất là *{METRIC_INFO[weakest_metric][0]}* "
+        content += f"({row[weakest_metric]:.3f}) — "
+        if weakest_metric in ("context_recall", "context_precision"):
+            content += "khả năng do retrieval (task9) chưa lấy đúng/đủ đoạn tài liệu liên quan.\n\n"
+        elif weakest_metric == "faithfulness":
+            content += "khả năng do generation (task10) trả lời không bám sát context được cấp.\n\n"
+        else:
+            content += "khả năng do câu trả lời lạc đề hoặc quá chung chung so với câu hỏi.\n\n"
+
+    # =========================================================================
+    # Recommendations
+    # =========================================================================
+    content += "## Recommendations\n\n"
     recs = []
-    weak_metrics = [
-        col for col in ["context_precision", "context_recall", "faithfulness", "answer_relevancy"]
-        if col in results.columns and results[col].mean() < 0.7
-    ]
+    weak_metrics = [col for col in METRIC_COLS if results[col].mean() < 0.7]
+
     if "context_precision" in weak_metrics or "context_recall" in weak_metrics:
         recs.append(
-            "- context_precision/context_recall thấp → retriever (task9) chưa lấy đủ/đúng "
-            "evidence; cân nhắc calibrate lại SCORE_THRESHOLD hoặc trọng số RRF."
+            "- **Retrieval (task9):** context_precision/context_recall thấp → cân nhắc calibrate "
+            "lại `SCORE_THRESHOLD`, trọng số RRF, hoặc tăng `top_k` trước khi rerank."
         )
     if "faithfulness" in weak_metrics:
+        worst_faith = results.loc[results["faithfulness"].idxmin()]
         recs.append(
-            "- faithfulness thấp → câu trả lời của LLM (task10) không bám sát context được "
-            "cấp; cân nhắc siết lại SYSTEM_PROMPT hoặc giảm temperature."
+            f"- **Generation (task10):** faithfulness thấp, ví dụ câu \"{_excerpt(worst_faith['question'], 60)}\" "
+            f"chỉ đạt {worst_faith['faithfulness']:.3f} — kiểm tra xem LLM có đang bịa thêm chi tiết "
+            "ngoài context hay không; cân nhắc siết `SYSTEM_PROMPT` hoặc giảm `TEMPERATURE`."
         )
     if "answer_relevancy" in weak_metrics:
         recs.append(
-            "- answer_relevancy thấp → câu trả lời lạc đề so với câu hỏi; kiểm tra lại "
-            "reorder_for_llm/format_context có giữ đúng câu hỏi gốc trong prompt không."
+            f"- **Generation (task10):** answer_relevancy trung bình chỉ {results['answer_relevancy'].mean():.3f} "
+            "— nhiều câu trả lời lạc đề/quá dài dòng so với câu hỏi gốc; kiểm tra `format_context`/"
+            "`reorder_for_llm` có giữ đúng câu hỏi ở vị trí LLM chú ý nhất không."
         )
-    if not recs:
+    if not weak_metrics:
         recs.append("- Tất cả metric đều ≥ 0.7 trên golden dataset hiện tại — chưa phát hiện điểm yếu rõ rệt.")
+
     recs.append(
-        "- Xem bảng A/B Comparison ở trên để quyết định có nên bật reranking "
-        "(use_reranking=True) trong production hay không."
+        "- Xem mục *A/B Comparison* để quyết định có nên bật reranking (`use_reranking=True`) "
+        "trong production hay không — hiện tại chênh lệch giữa 2 config khá nhỏ."
+    )
+    recs.append(
+        f"- Golden dataset hiện có {len(results)} câu hỏi — nên mở rộng thêm (đặc biệt các câu "
+        "hỏi thuộc nhóm điểm thấp ở mục Worst Performers) để kết luận A/B đáng tin cậy hơn."
     )
     content += "\n".join(recs) + "\n"
 
@@ -417,9 +561,12 @@ if __name__ == "__main__":
 
     pipeline = RealRAGPipeline()
 
-    results = evaluate_with_ragas(pipeline, golden_dataset)
-    print("\n=== RAGAS scores (per question) ===")
+    # compare_configs() đã chạy đủ cả 2 config (hybrid_rerank là config mặc định/production),
+    # nên dùng luôn kết quả hybrid_rerank làm "Overall Scores" — tránh chạy RAGAS dư 1 lần
+    # (đỡ tốn quota LLM, xem cảnh báo rate limit ở đầu file).
+    comparison = compare_configs(pipeline, golden_dataset)
+    results = comparison["hybrid_rerank"]
+    print("\n=== RAGAS scores (per question, hybrid_rerank) ===")
     print(results)
 
-    comparison = compare_configs(pipeline, golden_dataset)
     export_results(results, comparison)
