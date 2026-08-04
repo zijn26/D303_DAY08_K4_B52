@@ -9,6 +9,12 @@
 | context_recall | 0.886 |
 | context_precision | 1.000 |
 
+## Analysis
+- **Context Precision** (1.000 - Hoàn hảo): Các đoạn dữ liệu (chunks) trích xuất về đều liên quan trực tiếp đến câu hỏi và được sắp xếp ở ngay các vị trí đầu tiên, không bị lẫn thông tin nhiễu.
+- **Context Recall** (0.886 - Tốt): Bước tìm kiếm (Retrieval) đã thu thập được gần như đầy đủ các thông tin cần thiết từ CSDL để trả lời câu hỏi.
+- **Faithfulness** (0.778 - Khá): Mức độ trung thực của câu trả lời so với ngữ cảnh trích xuất được. Khoảng 22% nội dung câu trả lời có nguy cơ bị "bịa" (hallucination) hoặc lấy từ tri thức bên ngoài thay vì bám sát context.
+- **Answer Relevancy** (0.556 - Thấp): Độ liên quan giữa câu trả lời và câu hỏi của người dùng. Mức điểm này cho thấy câu trả lời còn lan man, dông dài hoặc chưa đi đúng trọng tâm thắc mắc.
+
 ## A/B Comparison
 
 | Config | faithfulness | answer_relevancy | context_recall | context_precision |
@@ -23,6 +29,7 @@
 | Người bán trên Shopee không được đăng bán những loại sản phẩm nào? | 0.000 | 0.000 | 1.000 | 1.000 |
 | Shopee hỗ trợ những phương thức thanh toán nào cho đơn hàng trên Sàn? | 0.500 | 0.928 | 0.625 | 1.000 |
 | Nếu người mua yêu cầu Trả hàng/Hoàn tiền cho toàn bộ sản phẩm trong đơn hàng và được hoàn đầy đủ giá trị đã thanh toán, phí vận chuyển ban đầu có được hoàn lại không? | 0.500 | 0.740 | 1.000 | 1.000 |
+
 
 ## Recommendations
 
