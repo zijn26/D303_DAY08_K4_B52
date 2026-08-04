@@ -559,11 +559,11 @@ run_dashboard()
 
 | Thành viên | MSSV | Vai trò & Nhiệm vụ | Trạng thái |
 |-----------|------|-------------------|------------|
-| Nguyễn Công Việt Quang | 2A202601586 | **Role 1 (Team Leader & RAG Architect)**: Điều phối tiến độ, ghép code tổng hợp (`supervisor.py` & Task 9) | Hoàn thành |
-| Trần Đăng Nguyên | 2A202601798 | **Role 2 (Data & Retrieval Specialist - Data/Dense)**: Phụ trách thu thập, chuẩn hoá dữ liệu (Task 1–3) và xây dựng ChromaDB (Task 4–5) | Hoàn thành |
-| Nguyễn Văn Huy Hoàng | 01338 | **Role 2 (Data & Retrieval Specialist - Sparse/Rerank)**: Phát triển BM25 Lexical Search (Task 6), RRF Reranking (Task 7) & PageIndex Fallback (Task 8) | Hoàn thành |
-| Vũ Ngọc Hùng | 2A202601722 | **Role 3 (Frontend & Chatbot Developer)**: Xây dựng giao diện Streamlit `app.py` và nối LLM Generation (Task 10) | Hoàn thành |
-| Nguyễn Khánh Toàn | 2A202601738 | **Role 4 (Evaluation & QA Engineer)**: Tạo `golden_dataset.json` (15 câu hỏi), thực thi RAGAS `eval_pipeline.py` và viết `results.md` | Hoàn thành |
+| Vũ Ngọc Hùng | 2A202601722 | **Role 1 (Team Leader & RAG Architect)**: Quản lý chung, ghép code pipeline chính (`supervisor.py` & Task 9) | Hoàn thành |
+| Nguyễn Văn Huy Hoàng | 01338 | **Role 2 (Data & Dense Search Dev)**: Task 1–3 (Data) + Task 4 (ChromaDB) + Task 5 (Semantic Search & HyDE) | Hoàn thành |
+| Trần Đăng Nguyên | 2A202601798 | **Role 3 (Sparse Search & Advanced Reranking Dev)**: Task 6 (BM25/TF-IDF) + Task 7 (RRF Reranking) + Task 8 (PageIndex Fallback) | Hoàn thành |
+| Nguyễn Công Việt Quang | 2A202601586 | **Role 4 (Frontend & Chatbot Developer)**: Xây dựng Streamlit Chatbot `app.py` + Task 10 (Generation có Citation) | Hoàn thành |
+| Nguyễn Khánh Toàn | 2A202601738 | **Role 5 (Evaluation & QA Engineer)**: Bộ câu hỏi `golden_dataset.json` + Đánh giá RAGAS & báo cáo so sánh A/B `results.md` | Hoàn thành |
 
 ---
 
