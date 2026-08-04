@@ -315,9 +315,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# =============================================================================
-# SESSION STATE INITIALIZATION
-# =============================================================================
+@st.cache_resource
+def prewarm_rag():
+    """Pre-warm index BM25 và ChromaDB collection để truy vấn nhanh."""
+    try:
+        from src.task6_lexical_search import initialize_index
+        initialize_index()
+    except Exception:
+        pass
+    return True
+
+prewarm_rag()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []

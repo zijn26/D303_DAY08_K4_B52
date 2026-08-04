@@ -82,8 +82,23 @@ def initialize_index() -> None:
     if BM25_INDEX is not None:
         return
 
-    documents = load_documents()
-    CORPUS = chunk_documents(documents) if documents else []
+    # Thử lấy chunks đã index từ ChromaDB để tiết kiệm thời gian (tránh re-chunk lại 17s)
+    try:
+        from src.task4_chunking_indexing import get_collection
+        collection = get_collection()
+        stored = collection.get(include=["documents", "metadatas"])
+        if stored and stored.get("documents"):
+            CORPUS = [
+                {"content": doc, "metadata": meta}
+                for doc, meta in zip(stored["documents"], stored["metadatas"])
+            ]
+    except Exception:
+        CORPUS = []
+
+    if not CORPUS:
+        documents = load_documents()
+        CORPUS = chunk_documents(documents) if documents else []
+
     BM25_INDEX = build_bm25_index(CORPUS)
 
 

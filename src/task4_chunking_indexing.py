@@ -62,20 +62,14 @@ EMBEDDING_DIM = 1024
 VECTOR_STORE = "chromadb"  # "chromadb" | "weaviate" | "faiss"
 COLLECTION_NAME = "ecommerce_support_docs"
 
-_OPENAI_CLIENT = None
-
-
 def get_openai_client() -> OpenAI:
     """Khởi tạo OpenAI client kết nối OpenRouter."""
-    global _OPENAI_CLIENT
-    if _OPENAI_CLIENT is None:
-        api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("Thiếu OPENROUTER_API_KEY (hoặc OPENAI_API_KEY) trong file .env!")
-        
-        base_url = "https://openrouter.ai/api/v1" if os.getenv("OPENROUTER_API_KEY") else None
-        _OPENAI_CLIENT = OpenAI(base_url=base_url, api_key=api_key)
-    return _OPENAI_CLIENT
+    api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("Thiếu OPENROUTER_API_KEY (hoặc OPENAI_API_KEY) trong file .env!")
+    
+    base_url = "https://openrouter.ai/api/v1" if os.getenv("OPENROUTER_API_KEY") else None
+    return OpenAI(base_url=base_url, api_key=api_key)
 
 
 def embed_query(query: str) -> list[float]:

@@ -106,13 +106,13 @@ python -m streamlit run app.py
 
 ## 👥 Phân Công Công Việc Nhóm
 
-| Thành viên | Nhiệm vụ | Trạng thái |
-|-----------|----------|------------|
-| Thành viên 1 | Data Crawling & Standardizing Markdown (Task 1-3) |  Hoàn thành |
-| Thành viên 2 | Chunking, Embedding & ChromaDB Indexing (Task 4-5) |  Hoàn thành |
-| Thành viên 3 | BM25 Lexical Search & RRF Reranking (Task 6-7) |  Hoàn thành |
-| Thành viên 4 | Retrieval Pipeline & PageIndex Fallback (Task 8-9) |  Hoàn thành |
-| Thành viên 5 | LLM Generation & Giao diện Streamlit App (Task 10 & UI) |  Hoàn thành |
+| Thành viên | MSSV | Vai trò & Nhiệm vụ | Trạng thái |
+|-----------|------|-------------------|------------|
+| Vũ Ngọc Hùng | 2A202601722 | **Role 1 (Team Leader & RAG Architect)**: Quản lý chung, ghép code pipeline chính (`supervisor.py` & Task 9) | Hoàn thành |
+| Nguyễn Văn Huy Hoàng | 01338 | **Role 2 (Data & Dense Search Dev)**: Task 1–3 (Data) + Task 4 (ChromaDB) + Task 5 (Semantic Search & HyDE) | Hoàn thành |
+| Trần Đăng Nguyên | 2A202601798 | **Role 3 (Sparse Search & Advanced Reranking Dev)**: Task 6 (BM25/TF-IDF) + Task 7 (RRF Reranking) + Task 8 (PageIndex Fallback) | Hoàn thành |
+| Nguyễn Công Việt Quang | 2A202601586 | **Role 4 (Frontend & Chatbot Developer)**: Xây dựng Streamlit Chatbot `app.py` + Task 10 (Generation có Citation) | Hoàn thành |
+| Nguyễn Khánh Toàn | 2A202601738 | **Role 5 (Evaluation & QA Engineer)**: Bộ câu hỏi `golden_dataset.json` + Đánh giá RAGAS & báo cáo so sánh A/B `results.md` | Hoàn thành |
 
 ---
 
