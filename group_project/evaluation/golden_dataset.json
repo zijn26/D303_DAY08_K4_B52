@@ -13,5 +13,85 @@
     "question": "Người bán không được đăng bán những sản phẩm nào?",
     "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
     "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+  },
+  {
+    "question": "Điều kiện để sản phẩm được chấp nhận trả hàng/hoàn tiền là gì?",
+    "expected_answer": "Sản phẩm phải còn nguyên vẹn, chưa qua sử dụng, còn đầy đủ tem/nhãn/phụ kiện/quà tặng kèm và hóa đơn (nếu có), trừ trường hợp lỗi do người bán hoặc hàng không đúng mô tả.",
+    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+  },
+  {
+    "question": "Thời gian hoàn tiền cho người mua sau khi yêu cầu trả hàng được duyệt là bao lâu?",
+    "expected_answer": "Từ 3-7 ngày làm việc tùy theo phương thức thanh toán ban đầu (ShopeePay hoàn tiền nhanh hơn thẻ ngân hàng).",
+    "expected_context": "Trang Returns and Refunds Policy, mục Refund Processing Time"
+  },
+  {
+    "question": "Ai chịu phí vận chuyển khi trả hàng do lỗi của người bán?",
+    "expected_answer": "Người bán chịu toàn bộ phí vận chuyển hai chiều nếu sản phẩm bị lỗi, hư hỏng, hoặc giao sai so với mô tả/đơn hàng.",
+    "expected_context": "Trang Returns and Refunds Policy, mục Return Shipping Fee"
+  },
+  {
+    "question": "Phí vận chuyển được tính dựa trên những yếu tố nào?",
+    "expected_answer": "Trọng lượng/kích thước đơn hàng, khoảng cách giao hàng, đơn vị vận chuyển được chọn, và các chương trình miễn phí vận chuyển (freeship) đang áp dụng.",
+    "expected_context": "Trang Shipping Policy, mục Shipping Fee Calculation"
+  },
+  {
+    "question": "Khi đơn hàng bị giao trễ so với thời gian dự kiến, khách hàng được hỗ trợ như thế nào?",
+    "expected_answer": "Khách hàng có thể liên hệ bộ phận hỗ trợ để được cập nhật trạng thái, và có thể nhận voucher/hoàn phí vận chuyển như một hình thức bồi thường tùy chính sách của đơn vị vận chuyển.",
+    "expected_context": "Trang Shipping Policy, mục Delayed Delivery"
+  },
+  {
+    "question": "Quy trình khiếu nại khi nhận được hàng lỗi hoặc không đúng mô tả gồm những bước nào?",
+    "expected_answer": "Người mua gửi yêu cầu Trả hàng/Hoàn tiền kèm hình ảnh/video bằng chứng trong thời hạn quy định, sàn/người bán xem xét và phản hồi, sau đó xử lý hoàn tiền hoặc đổi hàng nếu yêu cầu hợp lệ.",
+    "expected_context": "Trang Customer Support, mục Complaint Handling Process"
+  },
+  {
+    "question": "Người dùng cần làm gì nếu quên mật khẩu tài khoản?",
+    "expected_answer": "Chọn 'Quên mật khẩu' tại trang đăng nhập, xác thực qua số điện thoại hoặc email đã liên kết, sau đó đặt lại mật khẩu mới.",
+    "expected_context": "Trang Account & Security, mục Password Recovery"
+  },
+  {
+    "question": "Chính sách bảo mật thông tin khách hàng quy định dữ liệu cá nhân được sử dụng cho mục đích gì?",
+    "expected_answer": "Dữ liệu cá nhân chỉ được dùng để xử lý đơn hàng, giao hàng, chăm sóc khách hàng và cải thiện dịch vụ; không được chia sẻ cho bên thứ ba nếu không có sự đồng ý, trừ trường hợp pháp luật yêu cầu.",
+    "expected_context": "Trang Privacy Policy, mục Data Usage"
+  },
+  {
+    "question": "Voucher/mã giảm giá có được áp dụng đồng thời với chương trình flash sale không?",
+    "expected_answer": "Tùy loại voucher; một số voucher toàn sàn có thể áp dụng cùng flash sale, nhưng voucher của shop thường không cộng dồn với giá flash sale đã giảm sâu, chi tiết được ghi rõ trong điều kiện từng voucher.",
+    "expected_context": "Trang Promotions & Vouchers Policy, mục Voucher Stacking Rules"
+  },
+  {
+    "question": "Sản phẩm điện tử có được bảo hành theo chính sách của sàn không?",
+    "expected_answer": "Sản phẩm điện tử được bảo hành theo chính sách của nhà sản xuất/nhà phân phối chính hãng đi kèm phiếu bảo hành; sàn chỉ hỗ trợ trong thời gian đổi trả nếu lỗi do vận chuyển hoặc lỗi kỹ thuật ngay khi nhận hàng.",
+    "expected_context": "Trang Warranty Policy, mục Electronics Warranty"
+  },
+  {
+    "question": "Người mua có thể hủy đơn hàng sau khi đã thanh toán hay không?",
+    "expected_answer": "Có thể hủy nếu đơn hàng chưa được người bán xác nhận/chuẩn bị hàng; sau khi đơn đã được giao cho đơn vị vận chuyển thì phải chờ nhận hàng rồi làm yêu cầu trả hàng/hoàn tiền.",
+    "expected_context": "Trang Order Management Policy, mục Order Cancellation"
+  },
+  {
+    "question": "Người bán có được tự ý hủy đơn hàng đã xác nhận không?",
+    "expected_answer": "Người bán không được tự ý hủy đơn đã xác nhận trừ trường hợp hết hàng hoặc lý do bất khả kháng; hủy đơn không hợp lệ có thể dẫn đến phạt điểm hiệu suất hoặc khóa shop.",
+    "expected_context": "Trang Seller Regulations, mục Order Fulfillment Obligations"
+  },
+  {
+    "question": "Đánh giá (review) sản phẩm có thể bị gỡ bỏ trong trường hợp nào?",
+    "expected_answer": "Đánh giá chứa nội dung xúc phạm, sai sự thật, quảng cáo, thông tin cá nhân, hoặc vi phạm quy định cộng đồng có thể bị gỡ bỏ.",
+    "expected_context": "Trang Community Guidelines, mục Review & Rating Policy"
+  },
+  {
+    "question": "Khách hàng liên hệ bộ phận chăm sóc khách hàng bằng những kênh nào?",
+    "expected_answer": "Live chat trong ứng dụng, hotline tổng đài, email hỗ trợ, và fanpage/mạng xã hội chính thức của sàn.",
+    "expected_context": "Trang Customer Support, mục Contact Channels"
+  },
+  {
+    "question": "Khi tranh chấp giữa người mua và người bán không được giải quyết, ai sẽ đứng ra can thiệp?",
+    "expected_answer": "Bộ phận giải quyết tranh chấp của sàn sẽ can thiệp, xem xét bằng chứng từ cả hai bên và đưa ra quyết định cuối cùng về việc hoàn tiền, đổi hàng hoặc giữ nguyên đơn hàng.",
+    "expected_context": "Trang Dispute Resolution Policy, mục Escalation Process"
+  },
+  {
+    "question": "Sản phẩm thực phẩm tươi sống/đông lạnh có áp dụng chính sách đổi trả giống các sản phẩm khác không?",
+    "expected_answer": "Không, thực phẩm tươi sống/đông lạnh chỉ được yêu cầu đổi trả trong vòng 24 giờ kể từ khi nhận hàng, ngắn hơn nhiều so với thời hạn 15 ngày của các sản phẩm thông thường.",
+    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
   }
 ]
