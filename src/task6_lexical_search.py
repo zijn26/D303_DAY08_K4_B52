@@ -15,10 +15,45 @@ BM25 hoạt động thế nào:
     - k1=1.5 (term saturation), b=0.75 (length normalization)
 """
 
-from pathlib import Path
+import re
 
-# TODO: Load corpus từ data/standardized/ hoặc từ vector store
+from .task4_chunking_indexing import chunk_documents, load_documents
+
+# Corpus dùng chung cách chia chunk với Task 4 để dense search và BM25
+# trả về các đơn vị tài liệu tương thích khi hybrid retrieval.
 CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
+BM25_INDEX = None
+
+# Query expansion nhẹ cho corpus song ngữ: vẫn là lexical retrieval, nhưng bổ sung
+# các từ khóa tiếng Việt tương ứng khi người dùng hỏi bằng tiếng Anh.
+QUERY_EXPANSIONS = {
+    "return": ["trả", "hàng"],
+    "refund": ["hoàn", "tiền"],
+    "evidence": ["bằng", "chứng"],
+    "policy": ["chính", "sách"],
+    "payment": ["thanh", "toán"],
+    "methods": ["phương", "thức"],
+    "seller": ["người", "bán"],
+    "listing": ["đăng", "bán"],
+    "regulations": ["quy", "định"],
+    "order": ["đơn", "hàng"],
+    "tracking": ["theo", "dõi"],
+    "guide": ["hướng", "dẫn"],
+}
+
+
+def tokenize(text: str) -> list[str]:
+    """Tokenize không phân biệt hoa/thường, giữ chữ Việt và mã sản phẩm."""
+    return re.findall(r"\w+", text.lower(), flags=re.UNICODE)
+
+
+def tokenize_query(query: str) -> list[str]:
+    """Tokenize query và mở rộng các thuật ngữ TMĐT Anh–Việt phổ biến."""
+    tokens = tokenize(query)
+    expanded = list(tokens)
+    for token in tokens:
+        expanded.extend(QUERY_EXPANSIONS.get(token, []))
+    return expanded
 
 
 def build_bm25_index(corpus: list[dict]):
@@ -28,15 +63,25 @@ def build_bm25_index(corpus: list[dict]):
     Args:
         corpus: List of {'content': str, 'metadata': dict}
     """
-    # TODO: Implement BM25 index
-    #
-    # from rank_bm25 import BM25Okapi
-    #
-    # # Tokenize - có thể đơn giản split(), hoặc dùng underthesea cho tiếng Việt
-    # tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
-    # bm25 = BM25Okapi(tokenized_corpus)
-    # return bm25
-    raise NotImplementedError("Implement build_bm25_index")
+    from rank_bm25 import BM25Okapi
+
+    if not corpus:
+        return None
+
+    tokenized_corpus = [tokenize(doc["content"]) for doc in corpus]
+    return BM25Okapi(tokenized_corpus, k1=1.5, b=0.75)
+
+
+def initialize_index() -> None:
+    """Lazy-load documents và chỉ tạo BM25 index một lần trong mỗi process."""
+    global CORPUS, BM25_INDEX
+
+    if BM25_INDEX is not None:
+        return
+
+    documents = load_documents()
+    CORPUS = chunk_documents(documents) if documents else []
+    BM25_INDEX = build_bm25_index(CORPUS)
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
@@ -55,25 +100,40 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
         }
         Sorted by score descending.
     """
-    # TODO: Implement lexical search
-    #
-    # tokenized_query = query.lower().split()
-    # scores = bm25.get_scores(tokenized_query)
-    #
-    # # Get top_k indices
-    # import numpy as np
-    # top_indices = np.argsort(scores)[::-1][:top_k]
-    #
-    # results = []
-    # for idx in top_indices:
-    #     if scores[idx] > 0:
-    #         results.append({
-    #             "content": CORPUS[idx]["content"],
-    #             "score": float(scores[idx]),
-    #             "metadata": CORPUS[idx]["metadata"]
-    #         })
-    # return results
-    raise NotImplementedError("Implement lexical_search")
+    if not isinstance(query, str) or not query.strip() or top_k <= 0:
+        return []
+
+    initialize_index()
+    if BM25_INDEX is None or not CORPUS:
+        return []
+
+    query_tokens = tokenize_query(query)
+    if not query_tokens:
+        return []
+
+    scores = BM25_INDEX.get_scores(query_tokens)
+    ranked_indices = sorted(
+        range(len(scores)),
+        key=lambda idx: float(scores[idx]),
+        reverse=True,
+    )
+
+    results = []
+    for idx in ranked_indices:
+        score = float(scores[idx])
+        if score <= 0:
+            continue
+
+        document = CORPUS[idx]
+        results.append({
+            "content": document["content"],
+            "score": score,
+            "metadata": document.get("metadata", {}),
+        })
+        if len(results) >= top_k:
+            break
+
+    return results
 
 
 if __name__ == "__main__":
