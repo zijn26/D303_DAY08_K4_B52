@@ -14,9 +14,6 @@ bất kể nội dung đó có thật sự liên quan đến câu hỏi hay khô
 quyết định fallback ở Task 9 — xem ghi chú ở đó.
 """
 
-from typing import Optional
-
-
 def rerank_cross_encoder(
     query: str, candidates: list[dict], top_k: int = 5
 ) -> list[dict]:
@@ -126,28 +123,45 @@ def rerank_rrf(
     Returns:
         List of top_k candidates sorted by RRF score descending.
     """
-    # TODO: Implement RRF
-    #
-    # rrf_scores = {}  # content -> score
-    # content_map = {}  # content -> full dict
-    #
-    # for ranked_list in ranked_lists:
-    #     for rank, item in enumerate(ranked_list, 1):
-    #         key = item["content"]
-    #         rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k + rank)
-    #         content_map[key] = item
-    #
-    # # Sort by RRF score
-    # sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-    #
-    # results = []
-    # for content, score in sorted_items[:top_k]:
-    #     item = content_map[content].copy()
-    #     item["score"] = score
-    #     results.append(item)
-    #
-    # return results
-    raise NotImplementedError("Implement rerank_rrf")
+    if top_k <= 0 or not ranked_lists:
+        return []
+    if k < 0:
+        raise ValueError("k phải >= 0")
+
+    rrf_scores: dict[str, float] = {}
+    content_map: dict[str, dict] = {}
+    first_seen: dict[str, int] = {}
+    seen_counter = 0
+
+    for ranked_list in ranked_lists:
+        # Một document chỉ được tính một lần trong mỗi ranker, kể cả
+        # khi upstream vô tình trả về candidate trùng lặp.
+        seen_in_list: set[str] = set()
+        for rank, item in enumerate(ranked_list, start=1):
+            content = item.get("content")
+            if not isinstance(content, str) or not content or content in seen_in_list:
+                continue
+
+            seen_in_list.add(content)
+            rrf_scores[content] = rrf_scores.get(content, 0.0) + 1.0 / (k + rank)
+
+            # Giữ bản ghi từ lần xuất hiện có thứ hạng cao nhất.
+            if content not in content_map:
+                content_map[content] = item.copy()
+                first_seen[content] = seen_counter
+                seen_counter += 1
+
+    ranked_contents = sorted(
+        rrf_scores,
+        key=lambda content: (-rrf_scores[content], first_seen[content]),
+    )
+
+    results = []
+    for content in ranked_contents[:top_k]:
+        result = content_map[content].copy()
+        result["score"] = float(rrf_scores[content])
+        results.append(result)
+    return results
 
 
 # =============================================================================
@@ -178,19 +192,23 @@ def rerank(
         # Cần query_embedding - embed query trước
         raise NotImplementedError("Call rerank_mmr with query_embedding")
     elif method == "rrf":
-        # RRF cần nhiều ranked lists - gọi riêng
-        raise NotImplementedError("Call rerank_rrf with ranked_lists")
+        # Interface này nhận một ranked list. Task 9 có thể gọi
+        # rerank_rrf([dense_results, sparse_results]) để fuse hai ranker.
+        return rerank_rrf([candidates], top_k=top_k)
     else:
         raise ValueError(f"Unknown rerank method: {method}")
 
 
 if __name__ == "__main__":
-    # Test with dummy data
-    dummy_candidates = [
-        {"content": "Chính sách trả hàng và hoàn tiền Shopee trong 15 ngày", "score": 0.8, "metadata": {}},
-        {"content": "Các phương thức thanh toán hỗ trợ trên Shopee Vietnam", "score": 0.6, "metadata": {}},
-        {"content": "Quy định đăng bán sản phẩm dành cho người bán", "score": 0.5, "metadata": {}},
+    # Demo gộp hai thứ hạng có thang điểm khác nhau.
+    semantic_results = [
+        {"content": "Chính sách trả hàng và hoàn tiền", "score": 0.91, "metadata": {"source": "semantic"}},
+        {"content": "Các phương thức thanh toán", "score": 0.82, "metadata": {"source": "semantic"}},
     ]
-    results = rerank("chính sách trả hàng shopee", dummy_candidates, top_k=2)
+    bm25_results = [
+        {"content": "Các phương thức thanh toán", "score": 14.2, "metadata": {"source": "bm25"}},
+        {"content": "Quy định đăng bán sản phẩm", "score": 9.7, "metadata": {"source": "bm25"}},
+    ]
+    results = rerank_rrf([semantic_results, bm25_results], top_k=3)
     for r in results:
         print(f"[{r['score']:.3f}] {r['content']}")
