@@ -18,7 +18,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from .task9_retrieval_pipeline import retrieve
+try:
+    from src.task9_retrieval_pipeline import retrieve
+except ImportError:
+    from task9_retrieval_pipeline import retrieve
 
 
 # =============================================================================
